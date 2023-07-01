@@ -361,9 +361,11 @@ where
 
 impl Launch {
     pub(crate) fn launch(mut self) {
+        runtime::IS_CORE_THREAD_SPAWN_CALL.with(|f| *f.borrow_mut() = true);
         for worker in self.0.drain(..) {
             runtime::spawn_blocking(move || run(worker));
         }
+        runtime::IS_CORE_THREAD_SPAWN_CALL.with(|f| *f.borrow_mut() = false);
     }
 }
 

@@ -6,7 +6,7 @@ use crate::runtime::blocking::schedule::BlockingSchedule;
 use crate::runtime::blocking::{shutdown, BlockingTask};
 use crate::runtime::builder::ThreadNameFn;
 use crate::runtime::task::{self, JoinHandle};
-use crate::runtime::{Builder, Callback, Handle};
+use crate::runtime::{Builder, Callback, Handle, IS_CORE_THREAD_SPAWN_CALL};
 
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
@@ -457,7 +457,13 @@ impl Spawner {
         rt: &Handle,
         id: usize,
     ) -> std::io::Result<thread::JoinHandle<()>> {
-        let mut builder = thread::Builder::new().name((self.inner.thread_name)());
+        let name = if IS_CORE_THREAD_SPAWN_CALL.with(|v| *v.borrow()) {
+            format!("c-{}", (self.inner.thread_name)())
+        } else {
+            format!("b-{}", (self.inner.thread_name)())
+        };
+        let mut builder =
+            thread::Builder::new().name(name);
 
         if let Some(stack_size) = self.inner.stack_size {
             builder = builder.stack_size(stack_size);
@@ -473,6 +479,8 @@ impl Spawner {
         })
     }
 }
+
+
 
 cfg_metrics! {
     impl Spawner {

@@ -173,6 +173,12 @@
 //! [`Builder::enable_time`]: crate::runtime::Builder::enable_time
 //! [`Builder::enable_all`]: crate::runtime::Builder::enable_all
 
+use std::cell::RefCell;
+
+std::thread_local! {
+    static IS_CORE_THREAD_SPAWN_CALL: RefCell<bool> = RefCell::new(false);
+}
+
 // At the top due to macros
 #[cfg(test)]
 #[cfg(not(tokio_wasm))]
